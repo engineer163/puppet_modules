@@ -1,0 +1,20 @@
+[Unit]
+Description="Loki Compactor Instance"
+
+[Service]
+User=loki
+Group=loki
+ExecStart=/bin/bash -c "/usr/local/bin/loki -config.file=/etc/loki/loki-compactor.yaml -server.http-listen-port=3099 -server.grpc-listen-port=9094"
+ExecStartPost=/bin/bash -c "/usr/local/bin/consul services register -name=loki-compactor -id=loki-compactor -port=3099 -tag=metrics"
+ExecStopPost=/bin/bash -c "/usr/local/bin/consul services deregister -id=loki-compactor"
+
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=15
+StartLimitBurst=3
+LimitNOFILE=500000
+LimitNPROC=500000
+
+[Install]
+WantedBy=multi-user.target

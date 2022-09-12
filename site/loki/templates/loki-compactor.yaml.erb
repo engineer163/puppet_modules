@@ -1,0 +1,51 @@
+target: compactor
+auth_enabled: false
+
+server:
+  http_listen_address: 0.0.0.0
+  grpc_listen_address: 0.0.0.0
+  log_level: info
+
+compactor:
+  working_directory: /var/lib/loki/compactor
+  shared_store: gcs
+  compaction_interval: 1m #default 10m
+  retention_enabled: true #Without this, the Compactor will only compact tables.
+  retention_delete_delay: 2h
+  retention_delete_worker_count: 150
+  max_compaction_parallelism: 10 #default 1 maximum number of tables to compact in parallel
+  delete_request_cancel_period: 24h #default 24h Data would be deleted only after delete requests have been older than this duration.
+
+schema_config:
+  configs:
+  - from: 2020-08-01
+    store: boltdb-shipper
+    object_store: gcs
+    schema: v11
+    index:
+      prefix: index_
+      period: 24h
+
+storage_config:
+  index_queries_cache_config:
+    enable_fifocache: true
+  boltdb_shipper:
+    shared_store: gcs
+    active_index_directory: /var/lib/loki/index
+    cache_location: /var/lib/loki/boltdb-cache
+  gcs:
+    bucket_name: loki-piano
+
+limits_config:
+  retention_period: 344h
+  retention_stream:
+  - selector: '{app="haproxy"}'
+    priority: 1
+    period: 48h
+  enforce_metric_name: false
+  reject_old_samples: true
+  reject_old_samples_max_age: 344h 
+  ingestion_rate_mb: 100
+  ingestion_burst_size_mb: 20
+  max_query_parallelism: 2
+

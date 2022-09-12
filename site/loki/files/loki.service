@@ -1,0 +1,22 @@
+[Unit]
+Description="Loki instance"
+
+[Service]
+User=loki
+Group=loki
+ExecStart=/usr/local/bin/loki -config.file=/etc/loki/loki.yaml -server.http-listen-port=3100
+
+ExecStartPost=/bin/bash -c "/usr/local/bin/consul services register -name=loki -id=loki-$(hostname) -port=3100 -tag=metrics"
+ExecStopPost=/bin/bash -c "/usr/local/bin/consul services deregister -id=loki-$(hostname)"
+
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=on-failure
+RestartSec=5
+StartLimitInterval=15
+StartLimitBurst=3
+LimitNOFILE=500000
+LimitNPROC=500000
+
+[Install]
+WantedBy=multi-user.target
+
